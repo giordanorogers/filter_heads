@@ -46,8 +46,8 @@ Zero-Shot+FV Vocab Top K Vocab Probs:
 
 # Natural Language Test
 Input Sentence:  'The word "jog" means'
-GPT-J: '<|begin_of_text|>The word "jog" means to run at a slow pace. It is a'
-GPT-J+FV: '<|begin_of_text|>The word "jog" means Jog Jog Jog Jog Jog Jog Jog Jog Jog Jog'
+Llama: '<|begin_of_text|>The word "jog" means to run at a slow pace. It is a'
+Llama+FV: '<|begin_of_text|>The word "jog" means Jog Jog Jog Jog Jog Jog Jog Jog Jog Jog'
 ```
 
 **Example 2:**
@@ -73,8 +73,8 @@ Zero-Shot+FV Vocab Top K Vocab Probs:
 
 # Natural Language Test
 Input Sentence:  'The word "lizard" means'
-GPT-J: '<|begin_of_text|>The word "lizard" means "little thief" in Spanish, and the green'
-GPT-J+FV: '<|begin_of_text|>The word "lizard" means Lizard Lizard Lizard Lizard Lizard'
+Llama: '<|begin_of_text|>The word "lizard" means "little thief" in Spanish, and the green'
+Llama+FV: '<|begin_of_text|>The word "lizard" means Lizard Lizard Lizard Lizard Lizard'
 ```
 
 ###### Function Vector Computed with Mean Activations from Present-Past Task and Our Function Vector Heads
@@ -103,8 +103,8 @@ Zero-Shot+FV Vocab Top K Vocab Probs:
 
 # Natural Language Test
 Input Sentence:  'The word "transform" means'
-GPT-J: '<|begin_of_text|>The word "transform" means to change the form or appearance of something. In'
-GPT-J+FV: '<|begin_of_text|>The word "transform" means changed transformed. transformed\ntransformed transformed transformed transformed' 
+Llama: '<|begin_of_text|>The word "transform" means to change the form or appearance of something. In'
+Llama+FV: '<|begin_of_text|>The word "transform" means changed transformed. transformed\ntransformed transformed transformed transformed' 
 ```
 
 **Example 2:**
@@ -131,8 +131,8 @@ Zero-Shot+FV Vocab Top K Vocab Probs:
 
 # Natural Language Test
 Input Sentence:  'The word "operate" means'
-GPT-J: '<|begin_of_text|>The word "operate" means to perform a function or to manage something. In'
-GPT-J+FV: '<|begin_of_text|>The word "operate" means to operated or operated on. operated on operated on' 
+Llama: '<|begin_of_text|>The word "operate" means to perform a function or to manage something. In'
+Llama+FV: '<|begin_of_text|>The word "operate" means to operated or operated on. operated on operated on' 
 ```
 
 ##### Testing the Function Vector Heads on the Filter Tasks
