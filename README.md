@@ -12,11 +12,11 @@ The compared baselines (e.g., Function Vectors, Induction Heads): how did the au
 
 ##### Finding the Function Vector Heads
 
-TODO: We followed Todd et al. (2024) and computed the function vector heads by...
+We computed the function vector heads following Todd et al. (2024). For each attention head in the model, we extracted mean activations from correct in-context learning (ICL) prompts. We computed the average activation for each attention head across all prompts where the model successfully performs the task. We then create corrupt prompts by shuffling the ICL examples to create prompts where inputs are paired with random outputs. While running the model on these corrupted prompts, we replace each attention head's activation with the mean activation from correct prompts. We then calculate how much this intervention increases the probability of the correct answer. We then compute the average indirect effect for each head by averaging the causal indirect effect across all tasks in the dataset, as well as all corrupted prompts for each task. We then select the top 79 heads with the highest average indirect effect head scores. We chose the 79 because this corresponded to the number of filter heads found via our DCM method. These are the top 79 heads that most consistently help recover correct task performance when their activations are patched in. The corresponding function vector is then the sum of the mean outputs from these top causal heads.
 
 ##### Validating the Function Vector Heads
 
-We validated the function vector heads by testing them on a suite of tasks provided by Todd et al.
+We validated the function vector heads by testing them on a set of tasks provided by Todd et al.
 
 Our validation showed that we are able to use our found function vector heads to compute function vectors which successfully enforce the behavior of the in-context learning tasks from which they are extracted.
 
@@ -150,19 +150,4 @@ TODO: We followed Feucht et al. (2025) and computed the concept heads by...
 ##### Testing the Concept Heads on the Filter Tasks
 
 TODO: We tested the concept heads on the filter tasks by...
-
-#### Induction Heads
-
-TODO: Explain how we implemented the induction head baseline.
-
-##### Finding the Induction Heads
-
-TODO: We followed Feucht et al. (2025) and computed the induction heads by...
-
-##### Validating the Induction Heads
-
-##### Testing the Induction Heads on the Filter Tasks
-
-TODO: We tested the induction heads on the filter tasks by...
-
 
