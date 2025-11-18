@@ -143,7 +143,19 @@ TODO: We tested the function vector heads on the filter tasks by...
 
 ##### Finding the Concept Heads
 
-TODO: We followed Feucht et al. (2025) and computed the concept heads by...
+We followed Feucht et al. (2025) and computed the concept heads via a causal intervention experiment.
+We created special prompts with a repeating structure.
+The first half of each prompt included random tokens, plus a multi-token concept (e.g., "waxwing").
+The second half of each prompt included the same random tokens repeated, plus the first token of the concept.
+We created two versions of each prompt.
+The clean prompt has the real concept in the first half.
+The corrupted prompt has different random tokens in the first half.
+Then, for each attention head in the model, we patched its output from the clean prompt into the corrupted prompt, specifically at the position of the last random token in the second half (the position just before where the concept starts).
+We then measured whether this increased the probability of the second token of the multi-token word.
+If patching a head increased the probability for the second token of the concept, like "ax" in "waxwing" (which is tokenized as "w", "ax", "wing"), this suggests the head is carrying information about the entire concept, not just individual tokens.
+We call this the concept copying score.
+Heads with high concept copying scores are concept induction heads.
+They are distinct from regular token induction heads, which only increase the probability for the immediate next token.
 
 ##### Validating the Concept Heads
 
