@@ -1,6 +1,6 @@
 # LLMs Process Lists with General Filter Heads --- Additional Experiments
 
-## Role of Individual Filter Heads
+## Experiment 1: Role of Individual Filter Heads
 
 It is challenging to attribute specific roles to individual filter heads because they often work in combination to achieve the desired functionality. Also, neural nets like LMs implement algorithms in a distributed manner with multiple backup components. These redudant pathways can actively resist the intervention on a single head.
 
@@ -124,17 +124,21 @@ Format: SAE Index (Activation) -> Feature Label
 ```
 
 
-## Weakness 4
+## Experiment 2: Checking if the identifed Function Vector and Concept Heads work as expected.
 
-### Claim
+We use the recipe from the corresponding papers to identify the Function Vector ([Todd et al, 2024](https://functions.baulab.info/)) and Concept Heads ([Feucht et al, 2025](https://dualroute.baulab.info/)). We run their code with minimal modifications to adapt to Llama-3.3-70B-Instruct loaded on multiple GPUs. To identify Induction heads we use the code from Feucht et al, 2024.
 
-The compared baselines (e.g., Function Vectors, Induction Heads): how did the authors implement them? The details are not clear. The reviewer thinks some approaches (e.g., Function Vectors) mentioned here are not fit for the tasks studied in the paper inherently.
+In this section, we replicate some sanity check experiments from these papers to verify that we have properly identified these heads in our model. Please refer to Section 3.3 in the main text and Appendix K for details on how these heads relate in the scope of our work.
 
-### Rebuttal
+### Function Vector Heads
 
-#### Function Vector Heads
+<p align="center">
+<img src="fv-demonstrations.png" style="width:80%;"/>
+</p> 
 
-##### Finding the Function Vector Heads
+We replicate a causal experiment from [Todd et al, 2024](https://functions.baulab.info/). The figure above (Figure 1 from Todd et al, 2024) illustrates the idea. The function vector for a task/function is cached as the sum of the outputs of a set of attention heads (the function vector heads) when the model is performing the task correctly in-context. When we add this function vector to the residual stream at another context to see if it enforces the execution of the same function on this new context. 
+
+<!-- ##### Finding the Function Vector Heads
 
 We computed the function vector heads following Todd et al. (2024). For each attention head in the model, we extracted mean activations from correct in-context learning (ICL) prompts. We computed the average activation for each attention head across all prompts where the model successfully performs the task. We then create corrupt prompts by shuffling the ICL examples to create prompts where inputs are paired with random outputs. While running the model on these corrupted prompts, we replace each attention head's activation with the mean activation from correct prompts. We then calculate how much this intervention increases the probability of the correct answer. We then compute the average indirect effect for each head by averaging the causal indirect effect across all tasks in the dataset, as well as all corrupted prompts for each task. We then select the top 79 heads with the highest average indirect effect head scores. We chose the 79 because this corresponded to the number of filter heads found via our DCM method. These are the top 79 heads that most consistently help recover correct task performance when their activations are patched in. The corresponding function vector is then the sum of the mean outputs from these top causal heads.
 
@@ -144,9 +148,9 @@ We validated the function vector heads by testing them on a set of tasks provide
 
 Our validation showed that we are able to use our found function vector heads to compute function vectors which successfully enforce the behavior of the in-context learning tasks from which they are extracted.
 
-###### Function Vector Computed with Mean Activations from Capitalize Task and Our Function Vector Heads
+###### Function Vector Computed with Mean Activations from Capitalize Task and Our Function Vector Heads -->
 
-**Example 1:**
+**Example 1: Capitalize**
 
 ```python
 # Baseline Clean In-Context Learning
@@ -174,7 +178,7 @@ Llama: '<|begin_of_text|>The word "jog" means to run at a slow pace. It is a'
 Llama+FV: '<|begin_of_text|>The word "jog" means Jog Jog Jog Jog Jog Jog Jog Jog Jog Jog'
 ```
 
-**Example 2:**
+<!-- **Example 2:**
 ```python
 # Baseline Clean In-Context Learning
 Input Sentence: '<|endoftext|>Q: cow\nA: Cow\n\nQ: him\nA: Him\n\nQ: generous\nA: Generous\n\nQ: wolf\nA: Wolf\n\nQ: lemur\nA: Lemur\n\nQ: lizard\nA:' 
@@ -199,11 +203,11 @@ Zero-Shot+FV Vocab Top K Vocab Probs:
 Input Sentence:  'The word "lizard" means'
 Llama: '<|begin_of_text|>The word "lizard" means "little thief" in Spanish, and the green'
 Llama+FV: '<|begin_of_text|>The word "lizard" means Lizard Lizard Lizard Lizard Lizard'
-```
+``` -->
 
-###### Function Vector Computed with Mean Activations from Present-Past Task and Our Function Vector Heads
+<!-- ###### Function Vector Computed with Mean Activations from Present-Past Task and Our Function Vector Heads -->
 
-**Example 1:**
+**Example 2: Present-Past**
 
 ```python
 # Baseline Clean In-Context Learning
@@ -231,7 +235,7 @@ Llama: '<|begin_of_text|>The word "transform" means to change the form or appear
 Llama+FV: '<|begin_of_text|>The word "transform" means changed transformed. transformed\ntransformed transformed transformed transformed' 
 ```
 
-**Example 2:**
+<!-- **Example 2:**
 
 ```python
 # Baseline Clean In-Context Learning
@@ -257,11 +261,11 @@ Zero-Shot+FV Vocab Top K Vocab Probs:
 Input Sentence:  'The word "operate" means'
 Llama: '<|begin_of_text|>The word "operate" means to perform a function or to manage something. In'
 Llama+FV: '<|begin_of_text|>The word "operate" means to operated or operated on. operated on operated on' 
-```
+``` -->
 
-##### Testing the Function Vector Heads on the Filter Tasks
+<!-- ##### Testing the Function Vector Heads on the Filter Tasks
 
-TODO: We tested the function vector heads on the filter tasks by...
+TODO: We tested the function vector heads on the filter tasks by... -->
 
 #### Concept Heads
 
