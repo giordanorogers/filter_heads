@@ -147,6 +147,18 @@ TODO: We followed Feucht et al. (2025) and computed the concept heads by...
 
 ##### Validating the Concept Heads
 
+Concept induction heads have a characteristic attention pattern wherein they attend to the final token in previous occurrences of a multitoken word which follows previous occurrences of the current word in a context.
+The canonical example given in Feucht et al. (2025) uses the context "By the false azure in the windowpane By the false azure in the".
+In this case of Llama-2-7b, the model on which they performed their experiment, because "windowpane" is tokenized into three parts ("window", "p" and "ane"), the concept induction heads attend to the "ane" token, as visualized below.
+
+![Attention pattern showing strong attention toward the "ane" token.](llama_2_7b_concept_attention.png)
+
+We performed the same experiment, this time on Llama-3.3-70B-Instruct using the concept induction heads we found for Llama-3.3-70B-Instruct.
+In this model, the term "windowpane" is divided into two tokens: "window" and "pane".
+Below is the attention pattern we see, where the concept heads attend most heavily to the "pane" token.
+
+![Attention pattern showing strong attention toward the "pane" token.](llama_3_70b_instruct_concept_attention.png)
+
 ##### Testing the Concept Heads on the Filter Tasks
 
 TODO: We tested the concept heads on the filter tasks by...
