@@ -7,7 +7,7 @@ It is challenging to attribute specific roles to individual filter heads because
 Maybe we can check what do individual heads directly add to the residual stream to better isolate their roles. Here we report our results.
 
 ### Decoding the Contribution of Individual Filter Heads
-A naive approach to interpret latents is to directly apply the LM decoder head on it to check what are the top predicted tokens. This technique is popularly known as "Logit Lens" (see [nostalgebraist, 2020](https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens))
+A naive approach to interpret latents is to directly apply the LM decoder head on them to check what are the top predicted tokens. This technique is popularly known as "Logit Lens" (see [nostalgebraist, 2020](https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens))
 
 Since attention heads add to the residual stream they have the same dimensionality as the residual stream, making it possible to apply the logit lens directly on the output of individual heads. Maybe we can check what tokens are being promoted most by a specific head.
 
@@ -20,7 +20,7 @@ Answer:
 >>> " Grape"
 ```
 
-Below we show 5 examples for one filter head L35, H19 from Llama-3.3-70B-Instruct model. Interestingly, we sometimes see the letter the filtered item starts with in the top tokens promoted by the head. But this observation is not consistent across all examples for this head, also not all filter heads show this behavior. So it is unclear for us if this is a meaningful pattern.
+Below we show 5 examples for one filter head L35, H19 from Llama-3.3-70B-Instruct. Interestingly, we sometimes see the letter the filtered item starts with in the top tokens promoted by this filter head. But this observation is not consistent across all examples for this head. Also not all filter heads show this behavior. So it is unclear for us if this is a meaningful pattern.
 
 ```
 Format: (Expected Filtered Item, First token) -> Top Tokens in LogitLens
@@ -40,12 +40,12 @@ Format: (Expected Filtered Item, First token) -> Top Tokens in LogitLens
 
 ```
 
-For the same set of examples, we also subtract the logit lens output of the residual stream before the head from the logit lens output of the head contribution. This gives us the tokens that are specifically promoted by the head. Mathematically,
+For the same set of examples, we also subtract the logit lens output of the residual stream before the head from the logit lens output of the head contribution. This gives us the tokens that are specifically being promoted by the head and not carrying signals from the previous layers. Mathematically,
 
 $$
 \begin{align}
-\mathrm{logit\_diff} &= \mathrm{Decoder}\big(\text{OV contribution of head [L35, H19]}\big) - \mathrm{Decoder}\big(h^{34}\big) \nonumber \\
-\text{Where,} & \;\; h^{34} \text{ is the residual stream before layer 35} \nonumber \\
+\mathrm{logit\_diff} &= \mathrm{Decoder}\big(\text{OV contribution of head $[\ell, j]$}\big) - \mathrm{Decoder}\big(h^{\ell-1}\big) \nonumber \\
+\text{Where,} & \;\; h^{\ell-1} \text{ is the output of the previous layer} \nonumber \\
 \text{and, } & \;\; \mathrm{Decoder}(x) = \mathrm{LM\_head}\Big(\mathrm{final\_norm}\big(x\big)\Big) \nonumber 
 \end{align}
 $$
@@ -96,7 +96,7 @@ Format: (Expected Filtered Item, First token) -> Top Tokens in PatchScope
 
 We utilize [Goodfire’s SAE for layer 50](https://huggingface.co/Goodfire/Llama-3.3-70B-Instruct-SAE-l50) and access the labels of the features via their companion library [goodfire](https://github.com/goodfire-ai/goodfire-sdk). For an individual filter head, we take its OV contribution for a filter task prompt and get the k-nearest features from the SAE feature space. Then we check the labels of these features to see if they correspond to any interpretable concepts.
 
-We don't really see any interpretable patterns with this approach. We acknoledge that this approach is not appropriate since the SAE is trained on the residual stream after layer 50, which is quite far from the location of our filter head (Layer 35). But here we include results for one example for completeness.
+We don't really see any interpretable patterns with this approach. We acknowledge that this approach might not be appropriate since the SAE is trained on the residual stream activations. Also layer 50 is quite far from the location of our filter head (layer 35). But here we include results for one example for completeness.
 
 ```
 Prompt: 
@@ -267,9 +267,21 @@ Llama+FV: '<|begin_of_text|>The word "operate" means to operated or operated on.
 
 TODO: We tested the function vector heads on the filter tasks by... -->
 
-#### Concept Heads
+### Token Copier Heads vs Concept Copier Heads from Feucht et al. (2025)
 
-##### Finding the Concept Heads
+<p align="center">
+<img src="concept_induction_heads.jpg" style="width:80%;"/>
+</p> 
+
+Feucht et al, 2025 propsed a dual route model of induction in LMs: token-level induction heads which copy individual tokens, and concept-level induction heads which copy entire concepts. Although both types of heads help the model perform induction, looking at their attention patterns reveal a clear difference.
+
+<p align="center">
+<img src="concept_heads_attn_pattern.png" style="width:60%;"/>
+</p> 
+
+We identify the token copier heads and concept copier heads in Llama-3.3-70B-Instruct using the code from Feucht et al, 2025 with minimal modifications. We then replicate their attention pattern experiment to validate that we have correctly identified the concept heads. Token copier heads attend to the first token of previous occurrences of a word, while concept copier heads attend to the last token of previous occurrences of a multi-token concept. In this figure we are showing the aggregated attention patterns of top-10 token copier heads and top-10 concept copier heads identified in Llama-3.3-70B-Instruct.
+
+<!-- ##### Finding the Concept Heads
 
 We followed Feucht et al. (2025) and computed the concept heads via a causal intervention experiment.
 We created special prompts with a repeating structure.
@@ -301,5 +313,5 @@ Below is the attention pattern we see, where the concept heads attend most heavi
 
 ##### Testing the Concept Heads on the Filter Tasks
 
-TODO: We tested the concept heads on the filter tasks by...
+TODO: We tested the concept heads on the filter tasks by... -->
 
