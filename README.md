@@ -1,4 +1,128 @@
-# LLMs Process Lists with General Filter Heads
+# LLMs Process Lists with General Filter Heads --- Additional Experiments
+
+## Role of Individual Filter Heads
+
+It is challenging to attribute specific roles to individual filter heads because they often work in combination to achieve the desired functionality. Also, neural nets like LMs implement algorithms in a distributed manner with multiple backup components. These redudant pathways can actively resist the intervention on a single head.
+
+Maybe we can check what do individual heads directly add to the residual stream to better isolate their roles. Here we report our results.
+
+### Decoding the Contribution of Individual Filter Heads
+A naive approach to interpret latents is to directly apply the LM decoder head on it to check what are the top predicted tokens. This technique is popularly known as "Logit Lens" (see [nostalgebraist, 2020](https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens))
+
+Since attention heads add to the residual stream they have the same dimensionality as the residual stream, making it possible to apply the logit lens directly on the output of individual heads. Maybe we can check what tokens are being promoted most by a specific head.
+
+We use SelectOne prompts for this analysis. See below for an example
+
+```
+Options: Grape, Marker, Scarf, Stadium, Monkey, Bed.
+Which among these objects mentioned above is a fruit?
+Answer:
+>>> " Grape"
+```
+
+Below we show 5 examples for one filter head L35, H19 from Llama-3.3-70B-Instruct model. Interestingly, we sometimes see the letter the filtered item starts with in the top tokens promoted by the head. But this observation is not consistent across all examples for this head, also not all filter heads show this behavior. So it is unclear for us if this is a meaningful pattern.
+
+```
+Format: (Expected Filtered Item, First token) -> Top Tokens in LogitLens
+
+('Banana', ' Banana') -> ['_B', 'engin', ' bindActionCreators', 'utenberg', 'avia', 'atsapp', ' bana', 'dojo', ' titular', '袋']
+
+('Hickory', ' Hick') -> [' H', 'Premium', 'coma', 'ITER', '.habbo', '.hwp', 'anke', '｡', '우', ' hrad']
+
+('Mall', ' Mall') -> [' М', ' M', '_M', '-M', '.m', '.M', ' Μ', '_m', '\xa0M', ' Fallon']
+
+('Zebra', ' Z') -> [' V', 'olo', 'w', ' crypt', ' Vegan', 'rott', '469', 'ýt', ' animal', 'apon']
+
+('Notebook', ' Notebook') -> ['_N', ' consect', ' N', 'roman', 'dea', ' ', '\xa0N', '息', 'ILER', 'aste']
+
+('Sweater', ' Swe') -> ['_S', '\xa0S', ' シ', 'apon', '.sponge', 'ROWSER', '�', '\tS', ' Emblem', '469']
+
+
+```
+
+For the same set of examples, we also subtract the logit lens output of the residual stream before the head from the logit lens output of the head contribution. This gives us the tokens that are specifically promoted by the head. Mathematically,
+
+$$
+\begin{align}
+\mathrm{logit\_diff} &= \mathrm{Decoder}\big(\text{OV contribution of head [L35, H19]}\big) - \mathrm{Decoder}\big(h^{34}\big) \nonumber \\
+\text{Where,} & \;\; h^{34} \text{ is the residual stream before layer 35} \nonumber \\
+\text{and, } & \;\; \mathrm{Decoder}(x) = \mathrm{LM\_head}\Big(\mathrm{final\_norm}\big(x\big)\Big) \nonumber 
+\end{align}
+$$
+
+
+
+```
+Format: (Expected Filtered Item, First token) -> Top Tokens in LogitLens Difference
+
+('Banana', ' Banana') -> [' -*-\r\n', '��', '�부', ':.:.:', ' titular', '�数', '��', 'časí', 'EMPLARY', ' bindActionCreators']
+
+('Hickory', ' Hick') -> [' -*-\r\n', '_Tis', ' withString', '.IsAny', 'blr', ' Hizmetleri', 'hani', ' kabil', ' �', '-prepend']
+
+('Mall', ' Mall') -> [' -*-\r\n', '�a', ' RegexOptions', 'itmap', 'GNUC', '.Formatter', ' withString', 'LEGRO', 'oldur', 'Ｍ']
+
+('Zebra', ' Z') -> [' -*-\r\n', '��', 'ýt', '̧', 'icari', 'ako', '�数', ' vign', 'ertz', '札']
+
+('Notebook', ' Notebook') -> [' -*-\r\n', 'ertino', '��', 'roman', 'GNUC', '圍', 'ertest', ' Ler', 'čer', '围']
+
+('Sweater', ' Swe') -> [' -*-\r\n', '��', ' setContentView', ' bestselling', '�', '�数', 'ähr', ' ساله', ' withString', '�']
+
+
+
+```
+
+We also utilize PatchScope from [Ghandeharioun, 2024](https://arxiv.org/abs/2401.06102), which does not show any interpretable patterns. We patch the OV contribution of the head at layer 5. Please refer to our code in `notebooks/302/OV_contribution.ipynb` for details.
+
+```
+
+Format: (Expected Filtered Item, First token) -> Top Tokens in PatchScope
+
+('Banana', ' Banana') -> [' ', ' fifty', ' Fifty', ' \n', ' error', ' sixty', ' Error', ' number', ' -', ' not']
+
+('Hickory', ' Hick') -> [' ', ' fifty', ' sixty', ' \n', ' Fifty', ' error', ' not', ' -', ' Error', ' number']
+
+('Mall', ' Mall') -> [' ', ' fifty', ' seventy', ' Fifty', '57', ' \n', ' sixty', ' Sevent', ' number', ' not']
+
+('Zebra', ' Z') -> [' ', '02', '32', '52', '50', '0', ' -', '56', '58', ' \n']
+
+('Notebook', ' Notebook') -> [' ', '50', ' fifty', '30', ' \n', ' Fifty', ' number', ' -', '60', ' sixty']
+
+('Sweater', ' Swe') -> [' ', ' \n', ' fifty', ' error', ' not', '50', ' sixty', ' -', ' :', '60']
+
+```
+
+
+### Checking if SAE's can find Interpretable Features in the Contribution of Individual Filter Heads
+
+We utilize [Goodfire’s SAE for layer 50](https://huggingface.co/Goodfire/Llama-3.3-70B-Instruct-SAE-l50) and access the labels of the features via their companion library [goodfire](https://github.com/goodfire-ai/goodfire-sdk). For an individual filter head, we take its OV contribution for a filter task prompt and get the k-nearest features from the SAE feature space. Then we check the labels of these features to see if they correspond to any interpretable concepts.
+
+We don't really see any interpretable patterns with this approach. We acknoledge that this approach is not appropriate since the SAE is trained on the residual stream after layer 50, which is quite far from the location of our filter head (Layer 35). But here we include results for one example for completeness.
+
+```
+Prompt: 
+"""
+Options: Locket, Bangle, Library, Blueberry, Submarine, Trombone.
+Which among these objects mentioned above is a fruit?
+Answer:
+"""
+
+------------------------------------------------------------------------------------------------
+
+Format: SAE Index (Activation) -> Feature Label
+
+25085 (0.656): Feature("Structural delimiters and date formatting in system metadata")
+27078 (0.252): Feature("The assistant is in the middle portion of generating a numbered list")
+12673 (0.391): Feature("Assistant providing detailed explanations with structured discourse markers")
+60827 (0.322): Feature("List item separators in comma-separated sequences")
+2246  (0.355): Feature("Syntactical connectors in structured text generation")
+5569  (0.307): Feature("The assistant is providing a structured list or enumeration")
+17251 (0.389): Feature("Possessive determiners and equality operators in explanatory contexts")
+21864 (0.248): Feature("Patterns of explicit content and offensive descriptions")
+61521 (0.332): Feature("Measurement and evaluation phrases across different languages")
+35254 (0.271): Feature("Text expressing technical limitations or qualifications")
+
+```
+
 
 ## Weakness 4
 
